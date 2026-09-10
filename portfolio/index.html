@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Computing Suite</title>
+<style>
+  :root {
+    --bg: #0b1120;
+    --card: #131c31;
+    --border: #232f4a;
+    --text: #e6ebf5;
+    --muted: #8b98b4;
+    --accent: #5eead4;
+    --danger: #f87171;
+    --warn: #fbbf24;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 2.5rem 1.25rem 4rem;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  header { margin-bottom: 2.5rem; }
+  h1 { font-size: 1.9rem; margin: 0 0 0.4rem; }
+  .subtitle { color: var(--muted); font-size: 1rem; line-height: 1.5; max-width: 640px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.4rem;
+  }
+  .card h2 { font-size: 1.05rem; margin: 0 0 0.3rem; display: flex; align-items: center; gap: 0.5rem; }
+  .card p.desc { color: var(--muted); font-size: 0.88rem; line-height: 1.5; margin: 0 0 1rem; }
+  .status-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.03);
+  }
+  .status-dot.up { background: var(--accent); box-shadow: 0 0 0 3px rgba(94,234,212,0.15); }
+  .status-dot.down { background: var(--danger); box-shadow: 0 0 0 3px rgba(248,113,113,0.15); }
+  .status-dot.checking { background: var(--warn); }
+  .meta { font-size: 0.8rem; color: var(--muted); }
+  .meta a { color: var(--accent); text-decoration: none; }
+  .meta a:hover { text-decoration: underline; }
+  .tag {
+    display: inline-block; font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--muted); border: 1px solid var(--border);
+    border-radius: 999px; padding: 0.15rem 0.55rem; margin-top: 0.6rem;
+  }
+  .digest {
+    margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .digest b { color: var(--accent); }
+  footer { margin-top: 3rem; color: var(--muted); font-size: 0.8rem; }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Cloud Computing Suite</h1>
+    <p class="subtitle">
+      A small set of independently deployed services demonstrating different
+      cloud primitives: a managed relational database, a key-value store,
+      scheduled compute, and static hosting — each containerized, tested,
+      and continuously deployed.
+    </p>
+  </header>
+
+  <div class="grid">
+    <div class="card" id="card-todo">
+      <h2><span class="status-dot checking" id="dot-todo"></span> To-Do App</h2>
+      <p class="desc">Express + Postgres. CRUD API, structured logging, Prometheus metrics.</p>
+      <div class="meta" id="meta-todo">Checking…</div>
+      <span class="tag">web service · postgres</span>
+    </div>
+
+    <div class="card" id="card-hub">
+      <h2><span class="status-dot checking" id="dot-hub"></span> Utility Hub</h2>
+      <p class="desc">URL shortener + digest reader. Express + Redis (Render Key Value).</p>
+      <div class="meta" id="meta-hub">Checking…</div>
+      <span class="tag">web service · key value</span>
+    </div>
+
+    <div class="card" id="card-cron">
+      <h2><span class="status-dot" id="dot-cron"></span> Stats Cron</h2>
+      <p class="desc">Scheduled job — fetches GitHub repo stats on a timer and writes them to Redis.</p>
+      <div class="meta" id="meta-cron">No status endpoint (runs on a schedule, not a server) — see digest below.</div>
+      <span class="tag">cron job</span>
+      <div class="digest" id="digest">Digest: loading…</div>
+    </div>
+  </div>
+
+  <footer>
+    Source: <a href="https://github.com/arjitmenon9/todo-app" target="_blank" rel="noopener">todo-app</a>
+    · <a href="https://github.com/arjitmenon9/cloud-suite" target="_blank" rel="noopener">cloud-suite</a>
+  </footer>
+</div>
+
+<script>
+  // Filled in after each service is deployed.
+  const TODO_APP_URL = "https://todo-app-isky.onrender.com";
+  const UTILITY_HUB_URL = "__UTILITY_HUB_URL__";
+
+  async function checkHealth(url, dotId, metaId, label) {
+    const dot = document.getElementById(dotId);
+    const meta = document.getElementById(metaId);
+    try {
+      const start = performance.now();
+      const res = await fetch(url + "/health", { cache: "no-store" });
+      const ms = Math.round(performance.now() - start);
+      if (res.ok) {
+        dot.className = "status-dot up";
+        meta.innerHTML = `Up · ${ms}ms · <a href="${url}" target="_blank" rel="noopener">${label}</a>`;
+      } else {
+        dot.className = "status-dot down";
+        meta.textContent = `Responded with ${res.status}`;
+      }
+    } catch (e) {
+      dot.className = "status-dot down";
+      meta.innerHTML = `Unreachable (may be cold-starting on Render's free tier — try again in ~30s) · <a href="${url}" target="_blank" rel="noopener">${label}</a>`;
+    }
+  }
+
+  async function loadDigest() {
+    const el = document.getElementById("digest");
+    try {
+      const res = await fetch(UTILITY_HUB_URL + "/api/digest", { cache: "no-store" });
+      if (!res.ok) throw new Error("no digest yet");
+      const d = await res.json();
+      const when = new Date(d.fetchedAt).toLocaleString();
+      el.innerHTML = `Digest: <b>${d.repo}</b> — ${d.stars}★ ${d.forks} forks, ${d.openIssues} open issues <br><span style="color:var(--muted)">last fetched ${when}</span>`;
+      document.getElementById("dot-cron").className = "status-dot up";
+    } catch (e) {
+      el.textContent = "Digest: not available yet (cron job may not have run, or utility-hub is unreachable)";
+    }
+  }
+
+  checkHealth(TODO_APP_URL, "dot-todo", "meta-todo", "todo-app-isky.onrender.com");
+  checkHealth(UTILITY_HUB_URL, "dot-hub", "meta-hub", "utility-hub");
+  loadDigest();
+</script>
+</body>
+</html>
