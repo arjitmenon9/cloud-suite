@@ -14,8 +14,11 @@ Postgres-backed web service on its own.
 Live: **portfolio** ties it together — see its card for links, or:
 - `utility-hub`: shorten a URL with `POST /api/shorten {"url": "..."}`, then
   visit the returned `shortUrl`.
-- `stats-cron` writes a "digest" (GitHub stars/forks/issues for `todo-app`)
-  to Redis on a schedule; `utility-hub` serves it at `GET /api/digest`.
+- `stats-cron` writes a "digest" (GitHub stars/forks/issues) to Redis on a
+  schedule; `utility-hub` serves it at `GET /api/digest`. It tracks this repo
+  (`cloud-suite`) rather than the private `todo-app` repo, since the
+  unauthenticated GitHub API call it makes (no token, to stay free/simple)
+  returns 404 for private repos.
 
 ## Why split it up this way
 

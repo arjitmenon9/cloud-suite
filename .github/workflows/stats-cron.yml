@@ -26,4 +26,4 @@ jobs:
         env:
           REDIS_URL: ${{ secrets.REDIS_URL }}
           REDIS_TLS: 'true'
-          DIGEST_REPO: arjitmenon9/todo-app
+          DIGEST_REPO: arjitmenon9/cloud-suite
