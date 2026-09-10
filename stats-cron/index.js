@@ -1,7 +1,7 @@
 const { createClient } = require('./redis');
 const { fetchRepoStats } = require('./fetchStats');
 
-const REPO = process.env.DIGEST_REPO || 'arjitmenon9/todo-app';
+const REPO = process.env.DIGEST_REPO || 'arjitmenon9/cloud-suite';
 
 async function main() {
   const redis = createClient();
