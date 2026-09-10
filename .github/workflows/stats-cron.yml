@@ -1,0 +1,29 @@
+name: Stats digest (scheduled)
+
+# Render's Cron Job resource type requires a paid plan. GitHub Actions
+# scheduled workflows are free for public repos and do the same job just as
+# well: run a script on a timer with no server to keep alive.
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch: {} # allows a manual "Run workflow" click for a demo
+
+jobs:
+  run-digest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: stats-cron
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: stats-cron/package-lock.json
+      - run: npm ci
+      - run: npm start
+        env:
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_TLS: 'true'
+          DIGEST_REPO: arjitmenon9/todo-app
