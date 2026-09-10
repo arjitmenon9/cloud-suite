@@ -1,0 +1,39 @@
+# Local dev for the suite: utility-hub + Redis. (stats-cron is meant to run
+# once and exit — run it ad hoc with `docker compose run --rm stats-cron`.)
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  utility-hub:
+    build: ./utility-hub
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      REDIS_URL: redis://redis:6379
+      REDIS_TLS: "false"
+      NODE_ENV: development
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./utility-hub:/app
+      - /app/node_modules
+
+  stats-cron:
+    build: ./stats-cron
+    environment:
+      REDIS_URL: redis://redis:6379
+      REDIS_TLS: "false"
+      DIGEST_REPO: arjitmenon9/todo-app
+    depends_on:
+      redis:
+        condition: service_healthy
+    profiles: ["manual"] # doesn't start with `up`; run explicitly
