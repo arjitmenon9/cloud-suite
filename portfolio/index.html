@@ -94,9 +94,9 @@
 
     <div class="card" id="card-cron">
       <h2><span class="status-dot" id="dot-cron"></span> Stats Cron</h2>
-      <p class="desc">Scheduled job — fetches GitHub repo stats on a timer and writes them to Redis.</p>
+      <p class="desc">Scheduled job (GitHub Actions, not a paid Render cron) — fetches GitHub repo stats on a timer and writes them to Redis.</p>
       <div class="meta" id="meta-cron">No status endpoint (runs on a schedule, not a server) — see digest below.</div>
-      <span class="tag">cron job</span>
+      <span class="tag">scheduled · github actions</span>
       <div class="digest" id="digest">Digest: loading…</div>
     </div>
   </div>
@@ -110,7 +110,7 @@
 <script>
   // Filled in after each service is deployed.
   const TODO_APP_URL = "https://todo-app-isky.onrender.com";
-  const UTILITY_HUB_URL = "__UTILITY_HUB_URL__";
+  const UTILITY_HUB_URL = "https://cloud-suite-hub.onrender.com";
 
   async function checkHealth(url, dotId, metaId, label) {
     const dot = document.getElementById(dotId);

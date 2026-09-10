@@ -5,11 +5,11 @@ distinct cloud computing primitives rather than just one CRUD app. Companion
 to [`todo-app`](https://github.com/arjitmenon9/todo-app), which covers a
 Postgres-backed web service on its own.
 
-| Service | What it demonstrates | Backing store |
-|---|---|---|
-| [`utility-hub`](./utility-hub) | Always-on web service: URL shortener + a small read API | Redis (Render Key Value) |
-| [`stats-cron`](./stats-cron) | Scheduled/serverless-style compute — runs on a timer, not continuously | Same Redis, written to |
-| [`portfolio`](./portfolio) | Static hosting + CDN, client-side monitoring of the other two | none (static) |
+| Service | What it demonstrates | Backing store | Hosted on |
+|---|---|---|---|
+| [`utility-hub`](./utility-hub) | Always-on web service: URL shortener + a small read API | Redis (Render Key Value) | Render (free web service) |
+| [`stats-cron`](./stats-cron) | Scheduled/serverless-style compute — runs on a timer, not continuously | Same Redis, written to | **GitHub Actions** scheduled workflow (Render Cron Jobs require a paid plan — this gets the same "runs on a timer, no server to keep alive" concept for $0) |
+| [`portfolio`](./portfolio) | Static hosting + CDN, client-side monitoring of the other two | none (static) | Render (free static site) |
 
 Live: **portfolio** ties it together — see its card for links, or:
 - `utility-hub`: shorten a URL with `POST /api/shorten {"url": "..."}`, then
@@ -23,8 +23,10 @@ Each service is deployed and scaled independently, has its own Dockerfile
 and CI job, and uses the storage type that actually fits it: `utility-hub`
 needs fast key lookups (Redis), not a relational schema. `stats-cron` isn't
 a server at all — it runs, does one thing, and exits, which is exactly what
-a Render Cron Job (or AWS Lambda + EventBridge, GCP Cloud Scheduler, etc.)
-is for. `portfolio` needs no server at all.
+a scheduled job (Render Cron Job, AWS Lambda + EventBridge, GCP Cloud
+Scheduler, etc.) is for. It runs as a GitHub Actions scheduled workflow here
+specifically because Render's own Cron Job resource requires a paid plan —
+same architectural pattern, zero cost. `portfolio` needs no server at all.
 
 ## Local development
 
