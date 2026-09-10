@@ -112,7 +112,15 @@
   const TODO_APP_URL = "https://todo-app-isky.onrender.com";
   const UTILITY_HUB_URL = "https://cloud-suite-hub.onrender.com";
 
-  async function checkHealth(url, dotId, metaId, label) {
+  // Render's free tier spins services down after idle and the very first
+  // request while one is waking can bounce off the edge with a transient
+  // error (a bare 404/502) before the app is actually bound. One retry
+  // after a short pause covers that without the user needing to refresh.
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function checkHealth(url, dotId, metaId, label, attempt = 1) {
     const dot = document.getElementById(dotId);
     const meta = document.getElementById(metaId);
     try {
@@ -122,17 +130,27 @@
       if (res.ok) {
         dot.className = "status-dot up";
         meta.innerHTML = `Up · ${ms}ms · <a href="${url}" target="_blank" rel="noopener">${label}</a>`;
-      } else {
-        dot.className = "status-dot down";
-        meta.textContent = `Responded with ${res.status}`;
+        return;
       }
+      if (attempt < 3) {
+        meta.textContent = "Waking up…";
+        await sleep(4000);
+        return checkHealth(url, dotId, metaId, label, attempt + 1);
+      }
+      dot.className = "status-dot down";
+      meta.textContent = `Responded with ${res.status}`;
     } catch (e) {
+      if (attempt < 3) {
+        meta.textContent = "Waking up…";
+        await sleep(4000);
+        return checkHealth(url, dotId, metaId, label, attempt + 1);
+      }
       dot.className = "status-dot down";
       meta.innerHTML = `Unreachable (may be cold-starting on Render's free tier — try again in ~30s) · <a href="${url}" target="_blank" rel="noopener">${label}</a>`;
     }
   }
 
-  async function loadDigest() {
+  async function loadDigest(attempt = 1) {
     const el = document.getElementById("digest");
     try {
       const res = await fetch(UTILITY_HUB_URL + "/api/digest", { cache: "no-store" });
@@ -142,6 +160,11 @@
       el.innerHTML = `Digest: <b>${d.repo}</b> — ${d.stars}★ ${d.forks} forks, ${d.openIssues} open issues <br><span style="color:var(--muted)">last fetched ${when}</span>`;
       document.getElementById("dot-cron").className = "status-dot up";
     } catch (e) {
+      if (attempt < 3) {
+        el.textContent = "Digest: waking up utility-hub…";
+        await sleep(4000);
+        return loadDigest(attempt + 1);
+      }
       el.textContent = "Digest: not available yet (cron job may not have run, or utility-hub is unreachable)";
     }
   }
