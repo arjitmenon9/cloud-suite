@@ -1,9 +1,23 @@
 # Cloud Computing Suite
 
 A small set of independently deployed services, built to demonstrate several
-distinct cloud computing primitives rather than just one CRUD app. Companion
-to [`todo-app`](https://github.com/arjitmenon9/todo-app), which covers a
-Postgres-backed web service on its own.
+distinct cloud computing primitives rather than just one CRUD app.
+
+## Live URLs
+
+| Service | URL |
+|---|---|
+| Portfolio (status page) | https://cloud-suite-portfolio.onrender.com |
+| Utility Hub (API) | https://cloud-suite-hub.onrender.com |
+| Utility Hub health check | https://cloud-suite-hub.onrender.com/health |
+| Latest stats digest | https://cloud-suite-hub.onrender.com/api/digest |
+| Prometheus metrics | https://cloud-suite-hub.onrender.com/metrics |
+| Scheduled job runs | https://github.com/arjitmenon9/cloud-suite/actions/workflows/stats-cron.yml |
+
+Services run on Render's free tier and sleep when idle, so the first request
+can take ~30–60 seconds while they wake up.
+
+Design document: [`docs/Technical_Design_Document.md`](./docs/Technical_Design_Document.md)
 
 | Service | What it demonstrates | Backing store | Hosted on |
 |---|---|---|---|
