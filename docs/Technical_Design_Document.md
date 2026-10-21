@@ -104,6 +104,13 @@ The goal of this project was to design, build and deploy a small system that:
 | `/health` | GET | Pings Redis. Returns `ok` or `503 degraded` |
 | `/metrics` | GET | Prometheus metrics (default process metrics + `http_requests_total`) |
 
+`GET /` serves a small static page (`public/index.html`, via `express.static`)
+with a form that calls `POST /api/shorten` directly, so the shortener can be
+used from a browser without curl or the portfolio dashboard. It is same-origin
+with the API, so it needs no CORS handling of its own; the permissive CORS
+headers on the other endpoints exist for the portfolio dashboard's
+cross-origin requests.
+
 Redis key design:
 
 | Key | Value |
