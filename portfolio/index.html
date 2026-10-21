@@ -63,76 +63,6 @@
   .digest b { color: var(--accent); }
   footer { margin-top: 3rem; color: var(--muted); font-size: 0.8rem; }
   footer a { color: var(--accent); }
-
-  .shortener {
-    margin-top: 1rem;
-  }
-  .shortener form {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-  .shortener input[type="url"] {
-    flex: 1 1 260px;
-    padding: 0.6rem 0.8rem;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: #0e1626;
-    color: var(--text);
-    font-size: 0.9rem;
-  }
-  .shortener input[type="url"]:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
-  .shortener button {
-    padding: 0.6rem 1.1rem;
-    border-radius: 8px;
-    border: none;
-    background: var(--accent);
-    color: #06281f;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 0.9rem;
-    white-space: nowrap;
-  }
-  .shortener button:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-  .shortener-result {
-    margin-top: 1rem;
-    font-size: 0.88rem;
-    min-height: 1.2rem;
-  }
-  .shortener-result .row {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-  }
-  .shortener-result a.short-link {
-    color: var(--accent);
-    font-weight: 600;
-    word-break: break-all;
-  }
-  .shortener-result .orig {
-    color: var(--muted);
-    margin-top: 0.4rem;
-    font-size: 0.8rem;
-    word-break: break-all;
-  }
-  .copy-btn {
-    padding: 0.3rem 0.7rem;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    cursor: pointer;
-    font-size: 0.78rem;
-  }
-  .copy-btn:hover { border-color: var(--accent); }
-  .shortener-error { color: var(--danger); }
 </style>
 </head>
 <body>
@@ -169,24 +99,6 @@
       <span class="tag">scheduled · github actions</span>
       <div class="digest" id="digest">Digest: loading…</div>
     </div>
-  </div>
-
-  <div class="card shortener" id="card-shortener">
-    <h2>🔗 URL Shortener</h2>
-    <p class="desc">
-      Paste a long URL below. It's sent live to Utility Hub's <code>/api/shorten</code>
-      endpoint and stored in Redis — same thing the API does, just without the terminal.
-    </p>
-    <form id="shorten-form">
-      <input
-        id="shorten-input"
-        type="url"
-        required
-        placeholder="https://example.com/a/very/long/path"
-      >
-      <button type="submit" id="shorten-btn">Shorten</button>
-    </form>
-    <div class="shortener-result" id="shorten-result"></div>
   </div>
 
   <footer>
@@ -260,76 +172,6 @@
   checkHealth(TODO_APP_URL, "dot-todo", "meta-todo", "todo-app-isky.onrender.com");
   checkHealth(UTILITY_HUB_URL, "dot-hub", "meta-hub", "utility-hub");
   loadDigest();
-
-  // --- URL shortener form: calls utility-hub's POST /api/shorten directly
-  // from the browser (utility-hub sends a permissive CORS header), so the
-  // whole flow happens on this page instead of a terminal.
-  const shortenForm = document.getElementById("shorten-form");
-  const shortenInput = document.getElementById("shorten-input");
-  const shortenBtn = document.getElementById("shorten-btn");
-  const shortenResult = document.getElementById("shorten-result");
-
-  async function shortenUrl(longUrl, attempt = 1) {
-    shortenBtn.disabled = true;
-    shortenBtn.textContent = attempt > 1 ? "Waking up…" : "Shortening…";
-    if (attempt === 1) {
-      shortenResult.innerHTML = `<span style="color:var(--muted)">Working…</span>`;
-    }
-    try {
-      const res = await fetch(UTILITY_HUB_URL + "/api/shorten", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: longUrl }),
-      });
-
-      if (!res.ok) {
-        if ((res.status >= 500 || res.status === 404) && attempt < 3) {
-          shortenResult.innerHTML = `<span style="color:var(--muted)">Utility Hub may be cold-starting — retrying…</span>`;
-          await sleep(4000);
-          return shortenUrl(longUrl, attempt + 1);
-        }
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Request failed (${res.status})`);
-      }
-
-      const data = await res.json();
-      const shortUrl = data.shortUrl.replace("http://", "https://");
-      shortenResult.innerHTML = `
-        <div class="row">
-          <a class="short-link" href="${shortUrl}" target="_blank" rel="noopener">${shortUrl}</a>
-          <button type="button" class="copy-btn" id="copy-btn">Copy</button>
-        </div>
-        <div class="orig">→ ${data.url}</div>
-      `;
-      document.getElementById("copy-btn").addEventListener("click", async () => {
-        const btn = document.getElementById("copy-btn");
-        try {
-          await navigator.clipboard.writeText(shortUrl);
-          btn.textContent = "Copied!";
-        } catch (e) {
-          btn.textContent = "Copy failed";
-        }
-        setTimeout(() => { btn.textContent = "Copy"; }, 1500);
-      });
-    } catch (e) {
-      if (attempt < 3) {
-        shortenResult.innerHTML = `<span style="color:var(--muted)">Utility Hub may be cold-starting — retrying…</span>`;
-        await sleep(4000);
-        return shortenUrl(longUrl, attempt + 1);
-      }
-      shortenResult.innerHTML = `<span class="shortener-error">${e.message || "Could not reach Utility Hub — it may be cold-starting, try again in ~30s"}</span>`;
-    } finally {
-      shortenBtn.disabled = false;
-      shortenBtn.textContent = "Shorten";
-    }
-  }
-
-  shortenForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const longUrl = shortenInput.value.trim();
-    if (!longUrl) return;
-    shortenUrl(longUrl);
-  });
 </script>
 </body>
 </html>
