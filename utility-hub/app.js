@@ -14,11 +14,20 @@ const httpRequestCounter = new client.Counter({
   registers: [metricsRegistry],
 });
 
-// Simple permissive CORS for GET endpoints — this is a public demo suite,
-// nothing sensitive, and the portfolio static site needs to fetch these
-// cross-origin from the browser.
+// Simple permissive CORS — this is a public demo suite, nothing sensitive,
+// and the portfolio static site needs to call these endpoints cross-origin
+// from the browser, including a JSON POST to /api/shorten. A POST with a
+// Content-Type header triggers a CORS preflight (OPTIONS) request, so this
+// also answers that preflight directly instead of only handling the
+// simple GET case.
 function cors(req, res, next) {
   res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
   next();
 }
 
