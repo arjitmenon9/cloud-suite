@@ -30,6 +30,13 @@ describe('utility-hub', () => {
     expect(res.text).toContain('http_requests_total');
   });
 
+  test('GET / serves the shortener UI page', async () => {
+    const res = await request(app).get('/');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/html/);
+    expect(res.text).toContain('Shorten a URL');
+  });
+
   test('POST /api/shorten rejects missing url', async () => {
     const res = await request(app).post('/api/shorten').send({});
     expect(res.status).toBe(400);

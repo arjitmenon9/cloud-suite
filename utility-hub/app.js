@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const pinoHttp = require('pino-http');
 const client = require('prom-client');
@@ -57,6 +58,12 @@ function createApp(redis) {
     res.set('Content-Type', metricsRegistry.contentType);
     res.end(await metricsRegistry.metrics());
   });
+
+  // Serves public/index.html at GET / — a small page with a form for
+  // POST /api/shorten, so the shortener can be used without curl/terminal.
+  // express.static serves index.html for the directory root automatically
+  // and 404s (falls through, below) for anything else under public/.
+  app.use(express.static(path.join(__dirname, 'public')));
 
   app.use(digestRoutes(redis));
   app.use(shortenerRoutes(redis));
